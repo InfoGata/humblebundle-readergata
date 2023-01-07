@@ -55,6 +55,7 @@ interface DownloadUrl {
 const getHumbleBundleOrder = async (
   gamekey: string
 ): Promise<Publication[]> => {
+  const formats = ["pdf", "epub"];
   const bundleUrl = `https://www.humblebundle.com/api/v1/order/${gamekey}?ajax=true`;
   const orderResponse = await axios.get<Order>(getProxyUrl(bundleUrl));
   const filteredDownloads: Publication[] = orderResponse.data.subproducts
@@ -63,12 +64,18 @@ const getHumbleBundleOrder = async (
       (sp): Publication => ({
         title: sp.human_name,
         images: [{ url: sp.icon }],
-        sources: sp.downloads[0].download_struct.map(
-          (d): PublicationSource => ({
-            name: d.name,
-            source: d.url.web,
-          })
-        ),
+        sources: sp.downloads[0].download_struct
+          .map(
+            (d): PublicationSource => ({
+              name: d.name,
+              source: d.url.web,
+              type:
+                d.name.toLocaleLowerCase() === "pdf"
+                  ? "application/pdf"
+                  : "application/epub+zip",
+            })
+          )
+          .filter((s) => formats.includes(s.name?.toLocaleLowerCase() || "")),
       })
     );
   return filteredDownloads;
