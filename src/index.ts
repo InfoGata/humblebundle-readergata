@@ -126,6 +126,7 @@ application.onUiMessage = async (message: UiMessageType) => {
         application.onGetFeed = getFeed;
       }
       localStorage.setItem("simpleAuth", message.simpleAuth);
+      application.createNotification({ message: "Save successful" });
       break;
     default:
       const _exhaustive: never = message;
