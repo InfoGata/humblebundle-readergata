@@ -1,5 +1,5 @@
-# spotify-audiogata
+# humblebundle-readergata
 
-An [audiogata](https://github.com/InfoGata/audiogata) plugin for spotify.
+A [readergata](https://gitlab.com/elijahgreen/readergata) plugin for Humble Bundle.
 
-[Installation Link](https://www.audiogata.com/plugininstall?manifestUrl=https://cdn.jsdelivr.net/gh/InfoGata/spotify-audiogata@latest/manifest.json)
+<!--[Installation Link](https://www.audiogata.com/plugininstall?manifestUrl=https://cdn.jsdelivr.net/gh/InfoGata/spotify-audiogata@latest/manifest.json)-->
