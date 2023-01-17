@@ -135,11 +135,14 @@ export const blobToString = (blob: Blob): Promise<string> => {
 };
 
 application.onGetFeed = getFeed;
-application.onGetPublication = async (request: GetPublicationRequest) => {
+application.onGetPublication = async (
+  request: GetPublicationRequest
+): Promise<GetPublicationResponse> => {
   const result = await application.networkRequest(request.source);
   const blob = await result.blob();
   const response: GetPublicationResponse = {
-    data: await blobToString(blob),
+    source: await blobToString(blob),
+    sourceType: "binary",
   };
 
   return response;
