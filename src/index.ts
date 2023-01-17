@@ -1,19 +1,6 @@
-import axios from "axios";
 import { MessageType, UiMessageType } from "./shared";
 
-declare const application: Application;
 const orderUrl = "https://www.humblebundle.com/api/v1/user/order?ajax=true";
-
-const getProxyUrl = (url: string) => {
-  const simpleAuth = localStorage.getItem("simpleAuth");
-  const requestHeaders = {
-    Cookie: `_simpleauth_sess=${simpleAuth};`,
-  };
-  const proxiedUrl = `https://cloudcors.audio-pwa.workers.dev?setRequestHeaders=${JSON.stringify(
-    requestHeaders
-  )}&url=${url}`;
-  return proxiedUrl;
-};
 
 interface Bundle {
   gamekey: string;
@@ -57,8 +44,9 @@ const getHumbleBundleOrder = async (
 ): Promise<Publication[]> => {
   const formats = ["pdf", "epub"];
   const bundleUrl = `https://www.humblebundle.com/api/v1/order/${gamekey}?ajax=true`;
-  const orderResponse = await axios.get<Order>(getProxyUrl(bundleUrl));
-  const filteredDownloads: Publication[] = orderResponse.data.subproducts
+  const orderResponse = await application.networkRequest(bundleUrl);
+  const orderJson: Order = await orderResponse.json();
+  const filteredDownloads: Publication[] = orderJson.subproducts
     .filter((sp) => sp.downloads.some((d) => d.platform === "ebook"))
     .map(
       (sp): Publication => ({
@@ -82,12 +70,13 @@ const getHumbleBundleOrder = async (
 };
 
 const getOrders = async () => {
-  const bundleResponse = await axios.get<Bundle[]>(getProxyUrl(orderUrl));
+  const bundleResponse = await application.networkRequest(orderUrl);
   if (bundleResponse.status !== 200) {
     return [];
   }
 
-  const bundles = bundleResponse.data;
+  const bundles: Bundle[] = await bundleResponse.json();
+
   let promises: Promise<Publication[]>[] = [];
   for (const bundle of bundles) {
     promises.push(getHumbleBundleOrder(bundle.gamekey));
@@ -134,11 +123,24 @@ application.onUiMessage = async (message: UiMessageType) => {
   }
 };
 
-const init = () => {
-  const simpleAuth = localStorage.getItem("simpleAuth");
-  if (simpleAuth) {
-    application.onGetFeed = getFeed;
-  }
+export const blobToString = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (res) => {
+      resolve(res.target?.result as string);
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsBinaryString(blob);
+  });
 };
 
-init();
+application.onGetFeed = getFeed;
+application.onGetPublication = async (request: GetPublicationRequest) => {
+  const result = await application.networkRequest(request.source);
+  const blob = await result.blob();
+  const response: GetPublicationResponse = {
+    data: await blobToString(blob),
+  };
+
+  return response;
+};
