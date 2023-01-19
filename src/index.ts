@@ -89,11 +89,10 @@ const sendMessage = (message: MessageType) => {
   application.postUiMessage(message);
 };
 
-const getInfo = () => {
-  const simpleAuth = localStorage.getItem("simpleAuth") || "";
+const getInfo = async () => {
   sendMessage({
     type: "info",
-    simpleAuth: simpleAuth,
+    extensionedInstalled: await application.isNetworkRequestCorsDisabled(),
   });
 };
 
@@ -110,15 +109,8 @@ application.onUiMessage = async (message: UiMessageType) => {
     case "check-login":
       getInfo();
       break;
-    case "save":
-      if (message.simpleAuth) {
-        application.onGetFeed = getFeed;
-      }
-      localStorage.setItem("simpleAuth", message.simpleAuth);
-      application.createNotification({ message: "Save successful" });
-      break;
     default:
-      const _exhaustive: never = message;
+      const _exhaustive: never = message.type;
       break;
   }
 };

@@ -4,5 +4,7 @@
   "version": "1.0.0",
   "description": "Get books from Humble Bundle",
   "script": "dist/index.js",
-  "options": "dist/options.html"
+  "options": "dist/options.html",
+  "updateUrl": "https://cdn.jsdelivr.net/gh/InfoGata/humblebundle-readergata@latest/manifest.json",
+  "homepage": "https://github.com/InfoGata/humblebundle-readergata"
 }
