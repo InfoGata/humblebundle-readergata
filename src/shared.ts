@@ -2,10 +2,16 @@ type UiCheckLogin = {
   type: "check-login";
 };
 
-export type UiMessageType = UiCheckLogin;
+type UiSave = {
+  type: "save";
+  simpleAuth: string;
+};
+
+export type UiMessageType = UiCheckLogin | UiSave;
 
 type InfoType = {
   type: "info";
+  simpleAuth: string;
   extensionedInstalled: boolean;
 };
 

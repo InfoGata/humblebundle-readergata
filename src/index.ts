@@ -39,12 +39,23 @@ interface DownloadUrl {
   bittorrent: string;
 }
 
+const getProxyUrl = (url: string) => {
+  const simpleAuth = localStorage.getItem("simpleAuth");
+  const requestHeaders = {
+    Cookie: `_simpleauth_sess=${simpleAuth};`,
+  };
+  const proxiedUrl = `https://cloudcors.audio-pwa.workers.dev?setRequestHeaders=${JSON.stringify(
+    requestHeaders
+  )}&url=${url}`;
+  return proxiedUrl;
+};
+
 const getHumbleBundleOrder = async (
   gamekey: string
 ): Promise<Publication[]> => {
   const formats = ["pdf", "epub"];
   const bundleUrl = `https://www.humblebundle.com/api/v1/order/${gamekey}?ajax=true`;
-  const orderResponse = await application.networkRequest(bundleUrl);
+  const orderResponse = await fetch(getProxyUrl(bundleUrl));
   const orderJson: Order = await orderResponse.json();
   const filteredDownloads: Publication[] = orderJson.subproducts
     .filter((sp) => sp.downloads.some((d) => d.platform === "ebook"))
@@ -70,7 +81,7 @@ const getHumbleBundleOrder = async (
 };
 
 const getOrders = async () => {
-  const bundleResponse = await application.networkRequest(orderUrl);
+  const bundleResponse = await fetch(getProxyUrl(orderUrl));
   if (bundleResponse.status !== 200) {
     return [];
   }
@@ -90,9 +101,11 @@ const sendMessage = (message: MessageType) => {
 };
 
 const getInfo = async () => {
+  const simpleAuth = localStorage.getItem("simpleAuth") || "";
   sendMessage({
     type: "info",
     extensionedInstalled: await application.isNetworkRequestCorsDisabled(),
+    simpleAuth,
   });
 };
 
@@ -109,8 +122,15 @@ application.onUiMessage = async (message: UiMessageType) => {
     case "check-login":
       getInfo();
       break;
+    case "save":
+      if (message.simpleAuth) {
+        application.onGetFeed = getFeed;
+      }
+      localStorage.setItem("simpleAuth", message.simpleAuth);
+      application.createNotification({ message: "Save successful" });
+      break;
     default:
-      const _exhaustive: never = message.type;
+      const _exhaustive: never = message;
       break;
   }
 };
@@ -126,7 +146,6 @@ export const blobToString = (blob: Blob): Promise<string> => {
   });
 };
 
-application.onGetFeed = getFeed;
 application.onGetPublication = async (
   request: GetPublicationRequest
 ): Promise<GetPublicationResponse> => {
@@ -139,3 +158,12 @@ application.onGetPublication = async (
 
   return response;
 };
+
+const init = () => {
+  const simpleAuth = localStorage.getItem("simpleAuth");
+  if (simpleAuth) {
+    application.onGetFeed = getFeed;
+  }
+};
+
+init();
