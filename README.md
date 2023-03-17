@@ -1,6 +1,6 @@
 # humblebundle-readergata
 
-A [readergata](https://gitlab.com/elijahgreen/readergata) plugin for Humble Bundle.
+A [readergata](https://github.com/InfoGata/readergata) plugin for Humble Bundle.
 
 [Installation Link](https://www.readergata.com/plugininstall?manifestUrl=https://cdn.jsdelivr.net/gh/InfoGata/humblebundle-readergata@latest/manifest.json)
 
