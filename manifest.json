@@ -1,10 +1,15 @@
 {
   "id": "P5oPcz76xlHWUtp5AzLzg",
   "name": "Plugin for HumbleBundle",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Get books from Humble Bundle",
   "script": "dist/index.js",
   "options": "dist/options.html",
   "updateUrl": "https://cdn.jsdelivr.net/gh/InfoGata/humblebundle-readergata@latest/manifest.json",
-  "homepage": "https://github.com/InfoGata/humblebundle-readergata"
+  "homepage": "https://github.com/InfoGata/humblebundle-readergata",
+  "authentication": {
+    "loginUrl": "https://www.humblebundle.com/login?goto=%2Fhome%2Flibrary&qs=reason%3DsecureArea",
+    "cookiesToFind": ["_simpleauth_sess"],
+    "completionUrl": "https://www.humblebundle.com/home/library?reason=secureArea"
+  }
 }

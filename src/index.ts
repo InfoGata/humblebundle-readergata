@@ -55,7 +55,10 @@ const getHumbleBundleOrder = async (
 ): Promise<Publication[]> => {
   const formats = ["pdf", "epub"];
   const bundleUrl = `https://www.humblebundle.com/api/v1/order/${gamekey}?ajax=true`;
-  const orderResponse = await fetch(getProxyUrl(bundleUrl));
+  const orderResponse = (await application.isLoggedIn())
+    ? await application.networkRequest(bundleUrl)
+    : await fetch(getProxyUrl(bundleUrl));
+
   const orderJson: Order = await orderResponse.json();
   const filteredDownloads: Publication[] = orderJson.subproducts
     .filter((sp) => sp.downloads.some((d) => d.platform === "ebook"))
@@ -81,7 +84,9 @@ const getHumbleBundleOrder = async (
 };
 
 const getOrders = async () => {
-  const bundleResponse = await fetch(getProxyUrl(orderUrl));
+  const bundleResponse = (await application.isLoggedIn())
+    ? await application.networkRequest(orderUrl)
+    : await fetch(getProxyUrl(orderUrl));
   if (bundleResponse.status !== 200) {
     return [];
   }
@@ -159,11 +164,14 @@ application.onGetPublication = async (
   return response;
 };
 
-const init = () => {
+const init = async () => {
   const simpleAuth = localStorage.getItem("simpleAuth");
-  if (simpleAuth) {
+  const loggedIn = await application.isLoggedIn();
+  console.log("logged In:", loggedIn);
+  if (simpleAuth || loggedIn) {
     application.onGetFeed = getFeed;
   }
 };
 
+application.onPostLogin = init;
 init();
