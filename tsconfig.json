@@ -1,30 +1,18 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "module": "esnext",
     "target": "es2015",
     "moduleResolution": "node",
     "outDir": "./dist",
-    "strict":true,
-    "lib": [
-      "es6",
-      "es7",
-      "dom",
-      "es2019"
-    ],
+    "strict": true,
+    "lib": ["es6", "es7", "dom", "es2019"],
     "baseUrl": ".",
     "paths": {
-      "react": ["node_modules/preact/compat"],
-      "react-dom": ["node_modules/preact/compat"]
+      "~/*": ["./src/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/@infogata"
-    ]
+    "typeRoots": ["./node_modules/@types", "./node_modules/@infogata"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
-
