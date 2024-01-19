@@ -630,11 +630,19 @@ application.onGetPublication = async (request)=>{
     };
     return response;
 };
+const changeTheme = (theme)=>{
+    localStorage.setItem("kb-color-mode", theme);
+};
+application.onChangeTheme = async (theme)=>{
+    changeTheme(theme);
+};
 const init = async ()=>{
     const simpleAuth = localStorage.getItem("simpleAuth");
     const loggedIn = await application.isLoggedIn();
     console.log("logged In:", loggedIn);
     if (simpleAuth || loggedIn) application.onGetFeed = getFeed;
+    const theme = await application.getTheme();
+    changeTheme(theme);
 };
 application.onPostLogin = init;
 init();

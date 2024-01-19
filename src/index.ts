@@ -164,6 +164,13 @@ application.onGetPublication = async (
   return response;
 };
 
+const changeTheme = (theme: Theme) => {
+  localStorage.setItem("kb-color-mode", theme);
+};
+application.onChangeTheme = async (theme: Theme) => {
+  changeTheme(theme);
+};
+
 const init = async () => {
   const simpleAuth = localStorage.getItem("simpleAuth");
   const loggedIn = await application.isLoggedIn();
@@ -171,6 +178,8 @@ const init = async () => {
   if (simpleAuth || loggedIn) {
     application.onGetFeed = getFeed;
   }
+  const theme = await application.getTheme();
+  changeTheme(theme);
 };
 
 application.onPostLogin = init;

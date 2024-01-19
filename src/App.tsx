@@ -1,7 +1,7 @@
+import { createEffect, createSignal } from "solid-js";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { MessageType, UiMessageType } from "./shared";
-import { createEffect, createSignal } from "solid-js";
 
 const sendUiMessage = (message: UiMessageType) => {
   parent.postMessage(message, "*");
