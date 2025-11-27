@@ -1,4 +1,4 @@
-import { createEffect, createSignal } from "solid-js";
+import { useState, useEffect } from "preact/hooks";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { MessageType, UiMessageType } from "./shared";
@@ -8,18 +8,15 @@ const sendUiMessage = (message: UiMessageType) => {
 };
 
 const App = () => {
-  const [extensionInstalled, setExtensionInstalled] = createSignal(true);
-  const [simpleAuth, setSimpleAuth] = createSignal("");
+  const [extensionInstalled, setExtensionInstalled] = useState(true);
+  const [simpleAuth, setSimpleAuth] = useState("");
 
-  createEffect(() => {
+  useEffect(() => {
     const onMessage = (event: MessageEvent<MessageType>) => {
       switch (event.data.type) {
         case "info":
           setExtensionInstalled(event.data.extensionedInstalled);
           setSimpleAuth(event.data.simpleAuth);
-          break;
-        default:
-          const _exhaustive: never = event.data.type;
           break;
       }
     };
@@ -27,16 +24,16 @@ const App = () => {
     window.addEventListener("message", onMessage);
     sendUiMessage({ type: "check-login" });
     return () => window.removeEventListener("message", onMessage);
-  });
+  }, []);
 
   const saveCookie = () => {
-    sendUiMessage({ type: "save", simpleAuth: simpleAuth() });
+    sendUiMessage({ type: "save", simpleAuth: simpleAuth });
   };
 
   return (
-    <div class="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <h1>Instructions:</h1>
-      <ol class="pl-8 list-decimal list-inside space-y-1 flex flex-col">
+      <ol className="pl-8 list-decimal list-inside space-y-1 flex flex-col">
         <li>
           Browse to{" "}
           <a href="https://www.humblebundle.com/" target="_blank">
@@ -46,7 +43,7 @@ const App = () => {
         </li>
         <li>
           Find the value of the cookie _simpleauth_sess.
-          <div class="pl-8">
+          <div className="pl-8">
             <p>
               Firefox: Open the{" "}
               <a
@@ -88,15 +85,15 @@ const App = () => {
             InfoGata Extension
           </a>
         </li>
-        {extensionInstalled() && (
+        {extensionInstalled && (
           <li>You should now be able to browse yours books in Library</li>
         )}
       </ol>
       <Input
         placeholder="_simpleauth_sess Cookie"
-        value={simpleAuth()}
-        onChange={(e) => {
-          const value = e.currentTarget.value;
+        value={simpleAuth}
+        onChange={(e: any) => {
+          const value = (e.target as HTMLInputElement).value;
           setSimpleAuth(value);
         }}
       />
