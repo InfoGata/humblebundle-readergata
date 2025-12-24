@@ -8,14 +8,12 @@ const sendUiMessage = (message: UiMessageType) => {
 };
 
 const App = () => {
-  const [extensionInstalled, setExtensionInstalled] = useState(true);
   const [simpleAuth, setSimpleAuth] = useState("");
 
   useEffect(() => {
     const onMessage = (event: MessageEvent<MessageType>) => {
       switch (event.data.type) {
         case "info":
-          setExtensionInstalled(event.data.extensionedInstalled);
           setSimpleAuth(event.data.simpleAuth);
           break;
       }
@@ -76,16 +74,7 @@ const App = () => {
           </div>
         </li>
         <li>Paste into _simpleauth_sess Cookie text field and click Save</li>
-        <li>
-          Install the{" "}
-          <a
-            target="_blank"
-            href="https://github.com/InfoGata/infogata-extension"
-          >
-            InfoGata Extension
-          </a>
-        </li>
-        {extensionInstalled && (
+        {simpleAuth && (
           <li>You should now be able to browse yours books in Library</li>
         )}
       </ol>
