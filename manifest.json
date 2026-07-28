@@ -1,5 +1,6 @@
 {
   "id": "P5oPcz76xlHWUtp5AzLzg",
+  "alias": "humblebundle",
   "name": "Plugin for HumbleBundle",
   "version": "1.6.0",
   "description": "Get books from Humble Bundle",
