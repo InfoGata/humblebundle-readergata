@@ -1,144 +1,82 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  buildApiId,
-  parseApiId,
-  parseHumanSize,
-  subproductToPublication,
+  NotLoggedInError,
+  humbleRequest,
+  itemToPublication,
+  parseSourceRef,
+  sourcesFromFiles,
 } from "../index";
 
-const download = (name: string, url: string, humanSize?: string) => ({
-  name,
-  human_size: humanSize as string,
-  url: { web: url, bittorrent: `${url}.torrent` },
-});
+const app = (globalThis as any).application;
 
-const order = (overrides: Record<string, unknown> = {}) =>
-  ({
-    gamekey: "abc123",
-    product: { human_name: "Humble Book Bundle: Python" },
-    subproducts: [],
-    ...overrides,
-  }) as any;
+describe("humbleRequest", () => {
+  const url = "https://www.humblebundle.com/home/library";
 
-const subproduct = (overrides: Record<string, unknown> = {}) =>
-  ({
-    human_name: "Automate the Boring Stuff",
-    machine_name: "automate_boring_stuff",
-    icon: "https://example.com/icon.png",
-    url: "https://www.humblebundle.com/downloads?key=abc123",
-    downloads: [
-      {
-        platform: "ebook",
-        download_struct: [
-          download("PDF", "https://example.com/book.pdf", "8.4 MB"),
-          download("EPUB", "https://example.com/book.epub", "5.2 MB"),
-          download("MOBI", "https://example.com/book.mobi", "6 MB"),
-        ],
-      },
-    ],
-    ...overrides,
-  }) as any;
-
-describe("apiId", () => {
-  it("round trips a gamekey and machine name", () => {
-    expect(parseApiId(buildApiId("abc123", "automate_boring_stuff"))).toEqual({
-      gamekey: "abc123",
-      machineName: "automate_boring_stuff",
-    });
+  afterEach(() => {
+    app.isLoggedIn.mockResolvedValue(false);
+    app.networkRequest.mockReset();
   });
 
-  it("splits on the first separator, so a machine name may contain one", () => {
-    expect(parseApiId("abc123|weird|name")).toEqual({
-      gamekey: "abc123",
-      machineName: "weird|name",
-    });
+  it("goes through the app once logged in", async () => {
+    app.isLoggedIn.mockResolvedValue(true);
+    app.networkRequest.mockResolvedValue(new Response("ok"));
+    const init = { method: "POST", body: "x" };
+    await humbleRequest(url, init);
+    expect(app.networkRequest).toHaveBeenCalledWith(url, init);
   });
 
-  it("throws on an apiId that names no book", () => {
-    expect(() => parseApiId("abc123")).toThrow(/Unrecognized apiId/);
+  it("refuses without a login", async () => {
+    await expect(humbleRequest(url)).rejects.toBeInstanceOf(NotLoggedInError);
+    expect(app.networkRequest).not.toHaveBeenCalled();
+  });
+
+  it("reads a 401 as a lapsed login", async () => {
+    app.isLoggedIn.mockResolvedValue(true);
+    app.networkRequest.mockResolvedValue(new Response("", { status: 401 }));
+    await expect(humbleRequest(url)).rejects.toBeInstanceOf(NotLoggedInError);
   });
 });
 
-describe("parseHumanSize", () => {
-  it("reads the decimal units Humble displays", () => {
-    expect(parseHumanSize("5.2 MB")).toBe(5_200_000);
-    expect(parseHumanSize("1 GB")).toBe(1_000_000_000);
-    expect(parseHumanSize("512 kb")).toBe(512_000);
-    expect(parseHumanSize("900 B")).toBe(900);
-  });
-
-  it("tolerates missing whitespace and odd casing", () => {
-    expect(parseHumanSize("5.2mb")).toBe(5_200_000);
-  });
-
-  it("is undefined when there is no size to read", () => {
-    expect(parseHumanSize(undefined)).toBeUndefined();
-    expect(parseHumanSize("")).toBeUndefined();
-    expect(parseHumanSize("quite big")).toBeUndefined();
-  });
-});
-
-describe("subproductToPublication", () => {
-  it("identifies the book by its order and slug", () => {
-    const publication = subproductToPublication(order(), subproduct());
-    expect(publication.apiId).toBe("abc123|automate_boring_stuff");
-    expect(publication.title).toBe("Automate the Boring Stuff");
-    expect(publication.originalUrl).toBe(
-      "https://www.humblebundle.com/downloads?key=abc123"
-    );
-  });
-
-  it("files the book under the bundle it came in", () => {
-    expect(subproductToPublication(order(), subproduct()).categories).toEqual([
-      {
-        name: "Humble Book Bundle: Python",
-        scheme: "humblebundle:bundle",
-      },
-    ]);
-  });
-
-  it("keeps only the formats ReaderGata can open, with their sizes", () => {
-    const publication = subproductToPublication(order(), subproduct());
-    expect(publication.sources).toEqual([
-      {
-        name: "PDF",
-        source: "https://example.com/book.pdf",
-        type: "application/pdf",
-        size: 8_400_000,
-        acquisitionType: "open-access",
-      },
-      {
-        name: "EPUB",
-        source: "https://example.com/book.epub",
-        type: "application/epub+zip",
-        size: 5_200_000,
-        acquisitionType: "open-access",
-      },
-    ]);
-  });
-
-  it("leaves out the bundle name when the order has no product", () => {
-    const publication = subproductToPublication(
-      order({ product: undefined }),
-      subproduct()
-    );
-    expect(publication.categories).toBeUndefined();
-  });
-
-  it("leaves out a size Humble did not report", () => {
-    const publication = subproductToPublication(
-      order(),
-      subproduct({
-        downloads: [
-          {
-            platform: "ebook",
-            download_struct: [
-              download("EPUB", "https://example.com/book.epub"),
-            ],
-          },
-        ],
+describe("itemToPublication", () => {
+  it("identifies the book by its entitlement and files it under its bundle", () => {
+    expect(
+      itemToPublication({
+        id: "c7a5",
+        title: "Building Micro-Frontends",
+        subTitle: "Humble Tech Book Bundle",
+        type: "download_drm_free",
       })
-    );
-    expect(publication.sources?.[0].size).toBeUndefined();
+    ).toEqual({
+      title: "Building Micro-Frontends",
+      apiId: "c7a5",
+      categories: [
+        { name: "Humble Tech Book Bundle", scheme: "humblebundle:bundle" },
+      ],
+      originalUrl: "https://www.humblebundle.com/home/library/content/c7a5",
+    });
+  });
+});
+
+describe("sourcesFromFiles", () => {
+  it("offers the readable formats, naming the file rather than its signed url", () => {
+    const sources = sourcesFromFiles("c7a5", [
+      { downloadKey: "b_ebook", file: "b.pdf" },
+      { downloadKey: "b_ebook", file: "b.pdf.torrent" },
+      { downloadKey: "b_ebook", file: "b.epub" },
+    ]);
+    expect(sources.map((s) => s.name)).toEqual(["PDF", "EPUB"]);
+    expect(parseSourceRef(sources[1].source)).toEqual({
+      id: "c7a5",
+      downloadKey: "b_ebook",
+      file: "b.epub",
+    });
+  });
+});
+
+describe("parseSourceRef", () => {
+  it("explains a source saved from the old library", () => {
+    expect(() =>
+      parseSourceRef("https://dl.humble.com/book.epub?gamekey=x")
+    ).toThrow(/old library/);
   });
 });

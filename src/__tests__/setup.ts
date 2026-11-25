@@ -14,5 +14,6 @@ import "@testing-library/jest-dom/vitest";
   networkRequest: vi.fn(),
   isLoggedIn: vi.fn().mockResolvedValue(false),
   isNetworkRequestCorsDisabled: vi.fn().mockResolvedValue(false),
+  onPostLogout: null,
   getTheme: vi.fn().mockResolvedValue("light"),
 };
